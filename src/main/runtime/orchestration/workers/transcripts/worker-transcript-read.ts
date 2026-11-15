@@ -16,6 +16,10 @@ import {
   readInitialLocalWorkerTranscriptPage
 } from './worker-transcript-local-read'
 import { readInitialWorkerTranscriptReusing } from './worker-transcript-initial-read-cache'
+import {
+  nativeChatTurnEvidenceDecoderForAgent,
+  type NativeChatTurnEvidence
+} from '../../../../native-chat/transcript-decoding/transcript-turn-lifecycle'
 
 type WorkerTranscriptReadFailure = {
   ok: false
@@ -33,6 +37,9 @@ export type WorkerTranscriptReadSuccess = {
   limited: boolean
   clipping: string[]
   warnings: string[]
+  /** A first page's newest turn marker, decoded from the same bytes as its messages; cursor
+   *  pages carry none. */
+  turn?: NativeChatTurnEvidence
 }
 
 export type WorkerTranscriptReadResult = WorkerTranscriptReadFailure | WorkerTranscriptReadSuccess
@@ -90,13 +97,18 @@ async function readResolvedWorkerTranscript(
   limit: number,
   args: Pick<
     Parameters<typeof readWorkerTranscript>[0],
-    'offset' | 'expectedSourceFingerprint' | 'expectedBoundaryCheckpoint'
+    'agent' | 'offset' | 'expectedSourceFingerprint' | 'expectedBoundaryCheckpoint'
   >
 ): Promise<WorkerTranscriptReadResult> {
   try {
     const page =
       args.offset === undefined
-        ? await readInitialLocalWorkerTranscriptPage(filePath, limit, decode)
+        ? await readInitialLocalWorkerTranscriptPage(
+            filePath,
+            limit,
+            decode,
+            nativeChatTurnEvidenceDecoderForAgent(args.agent)
+          )
         : await readForwardLocalWorkerTranscriptPage(
             filePath,
             args.offset,
@@ -126,7 +138,8 @@ async function readResolvedWorkerTranscript(
         ...(page.limited ? ['message_limit_or_scan_window'] : []),
         ...(bounded.limited ? ['transcript_payload'] : [])
       ],
-      warnings: [...page.warnings, ...bounded.warnings]
+      warnings: [...page.warnings, ...bounded.warnings],
+      ...(page.turn ? { turn: page.turn } : {})
     }
   } catch (error) {
     const code = (error as NodeJS.ErrnoException | null)?.code
