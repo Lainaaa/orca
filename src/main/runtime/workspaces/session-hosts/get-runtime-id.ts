@@ -3,7 +3,7 @@ import { isDeepStrictEqual } from 'node:util'
 import { LOCAL_EXECUTION_HOST_ID, type ExecutionHostId } from '../../../../shared/execution-host'
 import type { WorkspaceSessionState } from '../../../../shared/workspace-session/workspace-session-state-types'
 import type { SleepingAgentSessionRecord } from '../../../../shared/agent-session/lifecycle/agent-session-resume'
-import { parseWorkspaceKey } from '../../../../shared/workspace-scope'
+import { parseWorkspaceKey } from '../../../../shared/workspace/identity/workspace-scope'
 import { TerminalListHostScope } from '../../terminal/query/terminal-list-host-scope'
 import type { RuntimeWorkspaceSelectors } from '../workspace-selectors'
 
