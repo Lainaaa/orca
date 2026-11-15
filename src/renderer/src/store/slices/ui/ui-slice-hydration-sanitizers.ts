@@ -264,11 +264,14 @@ export function sanitizeExplorerPreferences(
   }
 }
 
-export function sanitizeActivityBarArrangement(ui: {
-  activityBarOrder?: unknown
-  activityBarHidden?: unknown
-  activityBarPosition?: unknown
-}): {
+export function sanitizeActivityBarArrangement(
+  ui: {
+    activityBarOrder?: unknown
+    activityBarHidden?: unknown
+    activityBarPosition?: unknown
+  },
+  current: { activityBarOrder: string[]; activityBarHidden: string[] }
+): {
   activityBarOrder: string[]
   activityBarHidden: string[]
   activityBarPosition: ActivityBarPosition
@@ -277,7 +280,9 @@ export function sanitizeActivityBarArrangement(ui: {
     Array.isArray(value) ? value.filter((id): id is string => typeof id === 'string') : []
   return {
     activityBarPosition: sanitizeActivityBarPosition(ui.activityBarPosition),
-    activityBarOrder: strings(ui.activityBarOrder),
-    activityBarHidden: strings(ui.activityBarHidden)
+    activityBarOrder:
+      preserveStringArrayIdentity(current.activityBarOrder, strings(ui.activityBarOrder)) ?? [],
+    activityBarHidden:
+      preserveStringArrayIdentity(current.activityBarHidden, strings(ui.activityBarHidden)) ?? []
   }
 }
